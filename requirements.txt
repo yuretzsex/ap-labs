@@ -1,2 +1,5 @@
 flask
 waitress
+alembic
+mysqlclient
+mysql-connector
