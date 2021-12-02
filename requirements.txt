@@ -3,3 +3,5 @@ waitress
 alembic
 mysqlclient
 mysql-connector
+marshmallow
+flask-bcrypt
