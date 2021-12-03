@@ -27,4 +27,8 @@ class EditSchema(Schema):
 class StatsSchema(Schema):
     notes_created = fields.Integer()
 
+class EditorsSchema(Schema):
+    editors = fields.List(fields.Integer(),validate=Length(max=4))
+
+
 

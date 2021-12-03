@@ -4,7 +4,7 @@ from flask_bcrypt import Bcrypt
 from datetime import datetime
 from models import Note, NoteEditorRelaiton, NoteTagRelation, Tag, User, Edit, Stats
 from models import session
-from validation_schemas import NoteSchema, EditSchema
+from validation_schemas import NoteSchema, EditSchema,EditorsSchema
 
 note = Blueprint('note', __name__)
 bcrypt = Bcrypt()
@@ -86,3 +86,33 @@ def deleteNote(noteId):
     session.commit()
     session.close()
     return Response(response='The note was deleted.')
+
+@note.route('/api/v1/note/acces/<noteId>', methods=['PUT'])
+def giveAcces(noteId):
+    data = request.get_json(force=True)
+    try:
+        EditorsSchema().load(data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    note = session.query(Note).filter_by(id=noteId).first()
+    count = 0
+    existedEditors = session.query(NoteEditorRelaiton).filter_by(note=noteId)
+    for i in existedEditors:
+        count += 1
+    if not note:
+        return Response(status=404, response='Note was not found')
+    if 'editors' in data.keys():
+        for editor in data['editors']:
+            ed = session.query(User).filter_by(id=editor).first()
+            if not ed:
+                return Response(status=404, response='Provided user data was not found')
+            for i in existedEditors:
+                if i.editor == ed.id:
+                    return Response(status=400, response='User alredy has access')
+            if count > 5:
+                return Response(status=400, response='Cannot add more than 5 editors')
+            session.add(NoteEditorRelaiton(note=noteId, editor=ed.id))
+            session.commit()
+            count += 1
+    session.close()
+    return Response(response="Editors has been updated")
